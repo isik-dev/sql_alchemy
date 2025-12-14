@@ -1,7 +1,7 @@
-from sqlalchemy import text
+from sqlalchemy import text, insert
 
 from src.database import sync_engine, async_engine
-from src.models import metadata_obj
+from src.models import metadata_obj, workers_table
 
 
 # diff between engine.connect and engine.begin
@@ -24,21 +24,19 @@ async def get_version_async():
 
 
 def create_tables():
+    sync_engine.echo = False
     metadata_obj.drop_all(sync_engine)
     metadata_obj.create_all(sync_engine)
+    sync_engine.echo = True
 
 
 def insert_data():
     with sync_engine.connect() as conn:
-        conn.execute(
-            text(
-                """
-                insert into
-                    workers (username)
-                values
-                    ('Mike Tyson'),
-                    ('Muhammad Ali'),
-                    ('Floyd Mayweather');
-                """
-            )
-        )
+        
+        stmt = insert(table=workers_table).values([
+            {"username": "Bobr"},
+            {"username": "Volk"}
+        ])
+        
+        conn.execute(statement=stmt)
+        conn.commit()
